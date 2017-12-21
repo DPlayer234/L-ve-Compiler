@@ -1,7 +1,6 @@
 local getmetatable, ipairs, pairs, print, pcall, love = getmetatable, ipairs, pairs, print, pcall, love
 
 local KEEP_STRIPPED = false
-local DO_COMPILE = true
 
 do
 	local function recursivelyDelete(item, depth)
