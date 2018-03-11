@@ -1,7 +1,11 @@
 local getmetatable, ipairs, pairs, print, pcall, love = getmetatable, ipairs, pairs, print, pcall, love
 
+-- Set to false to keep the modified Lua source files
 local KEEP_STRIPPED = false
 
+--[[
+Remove old files
+]]
 do
 	local function recursivelyDelete(item, depth)
 		if love.filesystem.isDirectory(item) then
@@ -26,6 +30,7 @@ local getDir = love.filesystem.getDirectoryItems
 local newDir = love.filesystem.createDirectory
 local utf8 = require "utf8"
 
+-- Gets a list of files in a directory
 local function enum(path, cont, orig)
 	if not cont then cont = {} end
 	if not orig then orig = "^"..path.."/" end
@@ -41,12 +46,15 @@ local function enum(path, cont, orig)
 	return cont
 end
 
+-- Logging functions
 local log = setmetatable({}, {
 	__call = function(t, value)
 		print(value)
 		table.insert(t, tostring(value))
 	end
 })
+
+-- Iterate over all files
 for k,v in pairs(enum("in")) do
 	outpath = "out/"..v
 	inpath = "in/"..v
@@ -57,7 +65,9 @@ for k,v in pairs(enum("in")) do
 	end
 
 	if v:find("!") then
+		-- Files including ! are excluded.
 	elseif v:find("%.lua$") then
+		-- Compile lua file
 		log("~#~\t"..v)
 
 		local s, data = pcall(function()
@@ -67,16 +77,18 @@ for k,v in pairs(enum("in")) do
 
 			local content = {}
 			for line in love.filesystem.lines(inpath) do
-				if (line:find("--#")) then
-					if (line:find("--#exclude line")) then
+				if (line:find("%-%-#")) then
+					-- Special directives
+					if (line:find("%-%-#exclude line")) then
 						line = ""
-					elseif (line:find("--#exclude start")) then
+					elseif (line:find("%-%-#exclude start")) then
 						include = false
-					elseif (line:find("--#exclude end")) then
+					elseif (line:find("%-%-#exclude end")) then
 						include = true
-					elseif (line:find("--#const")) then
+					elseif (line:find("%-%-#const")) then
 						local depth, name, value = line:match("^(%s*)local ([_a-zA-Z0-9]+)%s*=%s*(.-)%s*%-%-#const%s*$")
 						if name and value then
+							if not (value:find("^%b()$")) then value = "("..value..")" end
 							constants[#constants+1] = {
 								name = name,
 								value = value,
@@ -87,6 +99,8 @@ for k,v in pairs(enum("in")) do
 						else
 							log("Incorrect #const ("..line..")")
 						end
+					else
+						log("Incorrect --# directive ("..line..")")
 					end
 				end
 
@@ -94,6 +108,7 @@ for k,v in pairs(enum("in")) do
 					local depth = #line:match("^(%s*)")
 					if not (line:find("^%s*$")) then
 						for i=#constants, 1, -1 do
+							-- Replace constants in line
 							local v = constants[i]
 
 							if v.depth > depth then
@@ -142,6 +157,7 @@ for k,v in pairs(enum("in")) do
 			log("\t"..data)
 		end
 	else
+		-- Copy other files
 		log("+++\t"..v)
 
 		local d = love.filesystem.newFileData(inpath)
