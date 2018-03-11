@@ -118,14 +118,26 @@ for k,v in pairs(enum("in")) do
 						if name == "const" then
 							log("Constant variable name cannot be 'const'.")
 						elseif name and value then
-							if not (value:find("^%b()$")) then value = "("..value..")" end
-							constants[#constants+1] = {
-								name = name,
-								value = value,
-								depth = #depth
-							}
-							line = ""
-							log("\t#const: '"..name.."' = '"..value.."'")
+							local s, r = pcall(function()
+								local v = load("return " .. value)()
+								if type(v) == "string" then
+									value = ("%q"):format(v)
+								else
+									value = "(" .. tostring(v) .. ")"
+								end
+							end)
+						
+							if s then
+								constants[#constants+1] = {
+									name = name,
+									value = value,
+									depth = #depth
+								}
+								line = depth .. "--c_" .. name .. " = " .. value
+								log("\t#const: '"..name.."' = '"..value.."'")
+							else
+								log("Cannot evaluate #const ("..line..")")
+							end
 						else
 							log("Incorrect #const ("..line..")")
 						end
