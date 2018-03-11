@@ -1,7 +1,7 @@
 local getmetatable, ipairs, pairs, print, pcall, love = getmetatable, ipairs, pairs, print, pcall, love
 
--- Set to false to keep the modified Lua source files
-local KEEP_STRIPPED = false
+-- If true, will keep the modified Lua source files instead of immediately deleting them
+local KEEP_STRIPPED = true
 
 --[[
 Remove old files
@@ -75,6 +75,34 @@ for k,v in pairs(enum("in")) do
 
 			local constants = {}
 
+			-- Replace constants in line
+			local function replaceConstants(line)
+				if not (line:find("^%s*$")) then
+					local depth = #line:match("^(%s*)")
+					for i=#constants, 1, -1 do
+						local v = constants[i]
+
+						if v.depth > depth then
+							table.remove(constants, i)
+						else
+							local a, b = 0, 0
+							repeat
+								a, b = line:find(v.name, b + 1)
+
+								if a then
+									local charA, charB = line:sub(a - 1, a - 1), line:sub(b + 1, b + 1)
+									if not (charA:find("[_a-zA-Z0-9]")) and not (charB:find("[_a-zA-Z0-9]")) then
+										line = line:sub(1, a - 1) .. v.value .. line:sub(b + 1, #line)
+									end
+								end
+							until not a
+						end
+					end
+				end
+
+				return line
+			end
+
 			local content = {}
 			for line in love.filesystem.lines(inpath) do
 				if (line:find("%-%-#")) then
@@ -86,8 +114,10 @@ for k,v in pairs(enum("in")) do
 					elseif (line:find("%-%-#exclude end")) then
 						include = true
 					elseif (line:find("%-%-#const")) then
-						local depth, name, value = line:match("^(%s*)local ([_a-zA-Z0-9]+)%s*=%s*(.-)%s*%-%-#const%s*$")
-						if name and value then
+						local depth, name, value = replaceConstants(line):match("^(%s*)local ([_a-zA-Z0-9]+)%s*=%s*(.-)%s*%-%-#const%s*$")
+						if name == "const" then
+							log("Constant variable name cannot be 'const'.")
+						elseif name and value then
 							if not (value:find("^%b()$")) then value = "("..value..")" end
 							constants[#constants+1] = {
 								name = name,
@@ -105,31 +135,7 @@ for k,v in pairs(enum("in")) do
 				end
 
 				if include then
-					local depth = #line:match("^(%s*)")
-					if not (line:find("^%s*$")) then
-						for i=#constants, 1, -1 do
-							-- Replace constants in line
-							local v = constants[i]
-
-							if v.depth > depth then
-								table.remove(constants, i)
-							else
-								local a, b = 0, 0
-								repeat
-									a, b = line:find(v.name, b + 1)
-
-									if a then
-										local charA, charB = line:sub(a - 1, a - 1), line:sub(b + 1, b + 1)
-										if not (charA:find("[_a-zA-Z0-9]")) and not (charB:find("[_a-zA-Z0-9]")) then
-											line = line:sub(1, a - 1) .. v.value .. line:sub(b + 1, #line)
-										end
-									end
-								until not a
-							end
-						end
-					end
-
-					content[#content+1] = line
+					content[#content+1] = replaceConstants(line)
 				else
 					content[#content+1] = ""
 				end
