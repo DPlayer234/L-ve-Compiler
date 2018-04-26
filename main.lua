@@ -3,31 +3,33 @@ local getmetatable, ipairs, pairs, print, pcall, love = getmetatable, ipairs, pa
 -- If true, will keep the modified Lua source files instead of immediately deleting them
 local KEEP_STRIPPED = true
 
+local isDir  = function(path) return love.filesystem.getInfo(path, "directory") ~= nil end
+local isFile = function(path) return love.filesystem.getInfo(path, "file") ~= nil end
+local getDir = love.filesystem.getDirectoryItems
+local newDir = love.filesystem.createDirectory
+
 --[[
 Remove old files
 ]]
 do
 	local function recursivelyDelete(item, depth)
-		if love.filesystem.isDirectory(item) then
-			for _, child in pairs(love.filesystem.getDirectoryItems(item)) do
+		if isDir(item) then
+			for _, child in pairs(getDir(item)) do
 				recursivelyDelete(item .. '/' .. child, depth + 1);
 				love.filesystem.remove(item .. '/' .. child);
 			end
-		elseif love.filesystem.isFile(item) then
+		elseif isFile(item) then
 			love.filesystem.remove(item);
 		end
 		love.filesystem.remove(item)
 	end
 
-	if love.filesystem.isDirectory("out") then recursivelyDelete("out", 0) end
-	if love.filesystem.isDirectory("code") then recursivelyDelete("code", 0) end
+	if isDir("out") then recursivelyDelete("out", 0) end
+	if isDir("code") then recursivelyDelete("code", 0) end
 end
-love.filesystem.createDirectory("out")
-love.filesystem.createDirectory("code")
+newDir("out")
+newDir("code")
 
-local isDir = love.filesystem.isDirectory
-local getDir = love.filesystem.getDirectoryItems
-local newDir = love.filesystem.createDirectory
 local utf8 = require "utf8"
 
 -- Gets a list of files in a directory
