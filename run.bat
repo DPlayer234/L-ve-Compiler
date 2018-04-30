@@ -1,2 +1,2 @@
-love ./
+love . --console
 pause
