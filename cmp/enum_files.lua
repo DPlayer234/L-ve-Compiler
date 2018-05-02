@@ -1,7 +1,7 @@
 --[[
 Returns a list of all files in the directory
 ]]
-local fs = require "file_system"
+local fs = require "cmp.file_system"
 
 function enumFiles(path, cont, orig)
    if not cont then cont = {} end

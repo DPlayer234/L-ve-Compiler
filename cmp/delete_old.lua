@@ -1,7 +1,7 @@
 --[[
 Deletes the old files
 ]]
-local fs = require "file_system"
+local fs = require "cmp.file_system"
 
 local function recursivelyDelete(item, depth)
 	if fs.isDir(item) then

@@ -1,33 +1,34 @@
 --[[
 Main file
 ]]
+function love.run() end
+
+_args = require "cmp.args"
+
+local checkInclude = require "cmp.check_include"
+local combineCode  = require "cmp.combine_code"
+local deleteOld    = require "cmp.delete_old"
+local enumFiles    = require "cmp.enum_files"
+local fs           = require "cmp.file_system"
+local foldCode     = require "cmp.fold_code"
+local log          = require "cmp.log"
+
+if _args.help or not fs.isDir("in") then
+	return print [[
+love . [args]
+
+Put your project in a folder called "in" located in the same directory as this
+tool's main.lua and run this.
+
+--help:      Display help.
+--nofold:    Disables constant folding and removal of code marked to be excluded.
+--nocombine: Do not combine code files.
+]]
+end
+
 local utf8 = require "utf8"
 
-local combineCode = require "combine_code"
-local deleteOld = require "delete_old"
-local enumFiles = require "enum_files"
-local fs = require "file_system"
-local foldCode = require "fold_code"
-local log = require "log"
-
 deleteOld()
-
-local dontCompile = {}
-
-if fs.isFile("in/_ignore.txt") then
-	for line in love.filesystem.lines("in/_ignore.txt") do
-		dontCompile[#dontCompile + 1] = line
-	end
-end
-
-local doCompile = function(path)
-	for i=1, #dontCompile do
-		if path:match(dontCompile[i]) then
-			return false
-		end
-	end
-	return true
-end
 
 local ensureParent = function(outpath)
 	local parent = string.match(outpath, "^(.*)[/\\].-$") or ""
@@ -38,28 +39,30 @@ local ensureParent = function(outpath)
 end
 
 fs.newDir("out")
-love.filesystem.write("out/main.lua", "")
+love.filesystem.write("out/main.lua", string.dump(loadstring("")))
 
 local codeList = {}
 
 -- Iterate over all files
-for k,v in pairs(enumFiles("in")) do
-	outpath = "out/"..v
-	inpath = "in/"..v
+for _, path in pairs(enumFiles("in")) do
+	outpath = "out/" .. path
+	inpath = "in/" .. path
 
-	if v:find("!") then
+	if path:find("!") then
 		-- Files including ! are excluded.
-	elseif v:find("%.lua$") then
-		-- Read Lua file
-		log("~#~\t"..v)
+	elseif path:find("%.lua$") then
+		-- Compile Lua file
+		if not _args.nocombine and checkInclude(path) then
+			log(">><\t" .. path)
 
-		if doCompile(v) then
 			codeList[#codeList + 1] = {
-				filepath = v,
+				filepath = path,
 				code = foldCode(inpath)
 			}
 		else
-			local compiledChunk, errormsg = love.filesystem.load(inpath)
+			log("~#~\t" .. path)
+			local foldedCode = foldCode(inpath)
+			local compiledChunk, errormsg = loadstring(foldedCode, path)
 
 			if compiledChunk ~= nil then
 				ensureParent(outpath)
@@ -74,29 +77,29 @@ for k,v in pairs(enumFiles("in")) do
 		ensureParent(outpath)
 
 		-- Copy other files
-		log("+++\t"..v)
+		log("+++\t" .. path)
 
 		local d = love.filesystem.newFileData(inpath)
 		if not love.filesystem.write(outpath, d) then
-			log("Could not copy "..v.."!?")
+			log("Could not copy " .. path .. "!?")
 		end
 	end
 end
 
-local totalCode = combineCode(codeList)
+if not _args.nocombine then
+	local totalCode = combineCode(codeList)
 
-log("Compiling Code...")
+	log("Compiling Code...")
 
-love.filesystem.write("game.compiled.lua", totalCode)
-local compiledChunk, errormsg = love.filesystem.load("game.compiled.lua")
+	love.filesystem.write("game.compiled.lua", totalCode)
+	local compiledChunk, errormsg = love.filesystem.load("game.compiled.lua")
 
-if compiledChunk ~= nil then
-	local dumpedChunk = string.dump(compiledChunk)
-	love.filesystem.write("out/conf.lua", dumpedChunk)
-else
-	log(errormsg)
+	if compiledChunk ~= nil then
+		local dumpedChunk = string.dump(compiledChunk)
+		love.filesystem.write("out/conf.lua", dumpedChunk)
+	else
+		log(errormsg)
+	end
 end
 
 love.filesystem.write("log.txt", table.concat(log, "\n"))
-
-function love.run() end

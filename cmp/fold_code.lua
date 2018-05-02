@@ -1,9 +1,13 @@
 --[[
 Returns a function that folds constants into the code
 ]]
-local log = require "log"
+local log = require "cmp.log"
 
 return function(inpath)
+	if _args.nofold then
+		return love.filesystem.read(inpath)
+	end
+
 	local include = true
 
 	local constants = {}

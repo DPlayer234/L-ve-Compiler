@@ -4,9 +4,9 @@ This returns a function which combines a table of code-strings into a larger cod
 local BASE = {}
 
 BASE.TOP = [[
-------------------------------------
--- Computer Generated Merged Code --
-------------------------------------
+------------------------------------------
+----- Computer Generated Merged Code -----
+------------------------------------------
 
 local _COMPILED = true
 
@@ -32,8 +32,8 @@ do
 			local modulePath = module:gsub("[%./\\]+", "/")
 
 			for i=1, #PACKAGE do
-				local path = PACKAGE[i]:gsub("%?", modulePath)
-				local file = virtual[path]
+				local filePath = PACKAGE[i]:gsub("%?", modulePath)
+				local file = virtual[filePath]
 
 				-- Load module if there is any
 				if file ~= nil then
@@ -47,22 +47,24 @@ do
 end
 
 do
-	-- Inject love.filesystem.load to check the virtual files.
-	local love_filesystem_load = love.filesystem.load
-	local love_filesystem_getInfo = love.filesystem.getInfo
+	local filesystem = require "love.filesystem"
 
-	love.filesystem.load = function(filepath)
-		local file = virtual[filepath]
+	-- Inject love.filesystem.load to check the virtual files.
+	local filesystem_load = filesystem.load
+	local filesystem_getInfo = filesystem.getInfo
+
+	filesystem.load = function(filePath)
+		local file = virtual[filePath]
 
 		if file ~= nil then
 			return file()
 		end
 
-		return love_filesystem_load(filepath)
+		return filesystem_load(filePath)
 	end
 
-	love.filesystem.getInfo = function(filepath, filter)
-		local file = virtual[filepath]
+	filesystem.getInfo = function(filePath, filter)
+		local file = virtual[filePath]
 
 		if file ~= nil and (filter == "file" or filter == nil) then
 			return {
@@ -72,7 +74,7 @@ do
 			}
 		end
 
-		return love_filesystem_getInfo(filepath, filter)
+		return filesystem_getInfo(filePath, filter)
 	end
 end
 
@@ -80,11 +82,13 @@ return virtual["conf.lua"]()()
 ]]
 
 BASE.FOREACH = [[
-[%q] = function()
-	return function(...)
-		%s
-	end
-end,
+[%q] = function() return function(...)
+----------------------------------------------------------------------------------------------------
+--=== % -88s ===--
+----------------------------------------------------------------------------------------------------
+%s
+----------------------------------------------------------------------------------------------------
+end end,
 ]]
 
 -- The actual function doing the work
@@ -95,7 +99,7 @@ return function(codeList)
 	totalCode[#totalCode + 1] = BASE.TOP
 
 	for i=1, #codeList do
-		totalCode[#totalCode + 1] = BASE.FOREACH:format(codeList[i].filepath, codeList[i].code)
+		totalCode[#totalCode + 1] = BASE.FOREACH:format(codeList[i].filepath, codeList[i].filepath, codeList[i].code)
 	end
 
 	totalCode[#totalCode + 1] = BASE.BOTTOM
