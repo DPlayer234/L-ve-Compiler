@@ -4,9 +4,11 @@ This returns a function which combines a table of code-strings into a single mod
 local BASE = {}
 
 BASE.TOP = [[
-------------------------------------------
------ Computer Generated Merged Code -----
-------------------------------------------
+---------------------------------------------------
+----- Computer Generated Merged Code          -----
+---------------------------------------------------
+----- Please use this file for debugging only -----
+---------------------------------------------------
 local _COMPILED = true
 
 -- Add the module components to package.preload

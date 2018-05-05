@@ -4,9 +4,11 @@ This returns a function which combines a table of code-strings into a larger cod
 local BASE = {}
 
 BASE.TOP = [[
-------------------------------------------
------ Computer Generated Merged Code -----
-------------------------------------------
+---------------------------------------------------
+----- Computer Generated Merged Code          -----
+---------------------------------------------------
+----- Please use this file for debugging only -----
+---------------------------------------------------
 local _COMPILED = true
 
 -- A table of functions, returning functions

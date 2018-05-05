@@ -90,12 +90,12 @@ for _, path in pairs(enumFiles("in")) do
 end
 
 if not _args.nocombine then
-	local mainFile = _args.module and (type(_args.module) == "string" or "init.lua") or "conf.lua"
+	local mainFile = _args.module and (type(_args.module) == "string" and _args.module or "init.lua") or "conf.lua"
 
 	log("Compiling Code...")
 
 	local totalCode = (_args.module and combineModule or combineCode)(codeList, mainFile)
-	love.filesystem.write("temp.lua", totalCode)
+	love.filesystem.write("merged-code.lua", totalCode)
 
 	local compiledChunk, errormsg = loadstring(totalCode, _args.module and (_args.module_name or "module") or "game")
 
@@ -108,3 +108,4 @@ if not _args.nocombine then
 end
 
 love.filesystem.write("log.txt", table.concat(log, "\n"))
+love.system.openURL("file:///" .. love.filesystem.getSaveDirectory())
