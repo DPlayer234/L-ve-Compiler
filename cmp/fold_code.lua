@@ -23,19 +23,9 @@ return function(inpath)
 			if v.depth > depth then
 				table.remove(constants, i)
 			else
-				while (" " .. line .. " "):find("[^_a-zA-Z0-9%.]" .. v.name .. "[^_a-zA-Z0-9]") do
-					local a, b = 0, 0
-					repeat
-						a, b = line:find(v.name, b + 1)
-
-						if a then
-							local charA, charB = line:sub(a - 1, a - 1), line:sub(b + 1, b + 1)
-							if not (charA:find("[_a-zA-Z0-9%.]")) and not (charB:find("[_a-zA-Z0-9]")) then
-								line = line:sub(1, a - 1) .. v.value .. line:sub(b + 1, #line)
-							end
-						end
-					until not a
-				end
+				line = line:gsub("[^_a-zA-Z0-9%.]" .. v.name .. "[^_a-zA-Z0-9]", function(s)
+					return s:sub(1, 1) .. v.value .. s:sub(#s, #s)
+				end)
 			end
 		end
 
@@ -60,7 +50,7 @@ return function(inpath)
 					local s, r = pcall(function()
 						local v = load("return " .. value)()
 						if type(v) == "string" then
-							value = ("%q"):format(v)
+							value = ("(%q)"):format(v)
 						else
 							value = "(" .. tostring(v) .. ")"
 						end
