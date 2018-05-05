@@ -7,7 +7,6 @@ BASE.TOP = [[
 ------------------------------------------
 ----- Computer Generated Merged Code -----
 ------------------------------------------
-
 local _COMPILED = true
 
 -- A table of functions, returning functions
@@ -77,8 +76,11 @@ do
 		return filesystem_getInfo(filePath, filter)
 	end
 end
+]]
 
-return virtual["conf.lua"]()()
+BASE.RETURN = [[
+-- Resume execution of main file
+return virtual[%q]()()
 ]]
 
 BASE.FOREACH = [[
@@ -93,7 +95,7 @@ end end,
 
 -- The actual function doing the work
 -- My lord.
-return function(codeList)
+return function(codeList, mainFile)
 	local totalCode = {}
 
 	totalCode[#totalCode + 1] = BASE.TOP
@@ -103,6 +105,8 @@ return function(codeList)
 	end
 
 	totalCode[#totalCode + 1] = BASE.BOTTOM
+
+	totalCode[#totalCode + 1] = BASE.RETURN:format(mainFile)
 
 	return table.concat(totalCode, "\r\n")
 end
