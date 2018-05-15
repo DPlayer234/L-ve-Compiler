@@ -23,9 +23,9 @@ return function(inpath)
 			if v.depth > depth then
 				table.remove(constants, i)
 			else
-				line = line:gsub("[^_a-zA-Z0-9%.]" .. v.name .. "[^_a-zA-Z0-9]", function(s)
+				line = (" " .. line .. " "):gsub("[^_a-zA-Z0-9%.]" .. v.name .. "[^_a-zA-Z0-9]", function(s)
 					return s:sub(1, 1) .. v.value .. s:sub(#s, #s)
-				end)
+				end):gsub("^ ", ""):gsub(" $", "")
 			end
 		end
 
