@@ -47,10 +47,15 @@ do
 	})
 end
 
+-- Disallow loading Lua from elsewhere
+do
+	package.path = ""
+end
+
+-- Inject love.filesystem.load to check the virtual files.
 do
 	local filesystem = require "love.filesystem"
 
-	-- Inject love.filesystem.load to check the virtual files.
 	local filesystem_load = filesystem.load
 	local filesystem_getInfo = filesystem.getInfo
 
