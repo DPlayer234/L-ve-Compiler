@@ -1,1 +1,1 @@
-love . --module "init.lua" --module_name "module"
+love . --module "init.lua" --module_name "debugger_c"

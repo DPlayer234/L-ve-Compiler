@@ -101,7 +101,7 @@ if not _args.nocombine then
 
 	if compiledChunk ~= nil then
 		local dumpedChunk = string.dump(compiledChunk)
-		love.filesystem.write("out/" .. mainFile, dumpedChunk)
+		love.filesystem.write("out/" .. (_args.module and (_args.module_name or "module") .. ".lua" or mainFile), dumpedChunk)
 	else
 		log(errormsg)
 	end
