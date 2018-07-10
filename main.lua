@@ -21,11 +21,18 @@ love . [args]
 Put your project in a folder called "in" located in the same directory as this
 tool's main.lua and run this.
 
---help:               Display help.
---nofold:             Disables constant folding and removal of code marked to be excluded.
---nocombine:          Do not combine code files.
---module [main_file]: Combine the files, regarding the set file as main.
---module_name [name]: Name of the module (used for the code string).
+--help:
+	Display help.
+--nofold:
+	Disables constant folding and removal of code marked to be excluded.
+--nocombine:
+	Do not combine code files.
+--png:
+	Re-encode PNG images.
+--module [main_file]:
+	Combine the files, regarding the set file as main.
+--module_name [name]:
+	Name of the module (used for the code string).
 ]]
 end
 
@@ -51,8 +58,8 @@ for _, path in pairs(enumFiles("in")) do
 	outpath = "out/" .. path
 	inpath = "in/" .. path
 
-	if path:find("!") then
-		-- Files including ! are excluded.
+	if path:find("!") or path:find("$") then
+		-- Files including ! or $ are excluded.
 	elseif path:find("%.lua$") then
 		-- Compile Lua file
 		if not _args.nocombine and checkInclude(path) then
@@ -76,10 +83,24 @@ for _, path in pairs(enumFiles("in")) do
 				log(errormsg)
 			end
 		end
-	else
+	elseif _args.png and path:find("%.png$") then
+		-- Recode PNGs
 		ensureParent(outpath)
 
+		local ok, imageData = pcall(love.image.newImageData, inpath)
+		if ok then
+			local newData = imageData:encode("png")
+
+			if not love.filesystem.write(outpath, newData) then
+				log("Could not write " .. path .. "!?")
+			end
+		else
+			log("Could not decode " .. path .. "!?")
+		end
+	else
 		-- Copy other files
+		ensureParent(outpath)
+
 		log("+++\t" .. path)
 
 		local d = love.filesystem.newFileData(inpath)

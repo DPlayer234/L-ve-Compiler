@@ -1,2 +1,2 @@
-love . --console
+love . --png --console
 pause
