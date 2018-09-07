@@ -21,6 +21,10 @@ love . [args]
 Put your project in a folder called "in" located in the same directory as this
 tool's main.lua and run this.
 
+--addargs:
+	Add all following arguments.
+--nocompile:
+	Do not compile code.
 --help:
 	Display help.
 --nofold:
@@ -49,7 +53,11 @@ local ensureParent = function(outpath)
 end
 
 fs.newDir("out")
-love.filesystem.write("out/main.lua", string.dump(loadstring("")))
+if _args.nocompile then
+	love.filesystem.write("out/main.lua", "")
+else
+	love.filesystem.write("out/main.lua", string.dump(loadstring("")))
+end
 
 local codeList = {}
 
@@ -58,7 +66,7 @@ for _, path in pairs(enumFiles("in")) do
 	outpath = "out/" .. path
 	inpath = "in/" .. path
 
-	if path:find("!") or path:find("$") then
+	if path:find("%!") or path:find("%$") then
 		-- Files including ! or $ are excluded.
 	elseif path:find("%.lua$") then
 		-- Compile Lua file
@@ -72,15 +80,20 @@ for _, path in pairs(enumFiles("in")) do
 		else
 			log("~#~\t" .. path)
 			local foldedCode = foldCode(inpath)
-			local compiledChunk, errormsg = loadstring(foldedCode, path)
 
-			if compiledChunk ~= nil then
-				ensureParent(outpath)
+			ensureParent(outpath)
 
-				local dumpedChunk = string.dump(compiledChunk)
-				love.filesystem.write(outpath, dumpedChunk)
+			if _args.nocompile then
+				love.filesystem.write(outpath, foldedCode)
 			else
-				log(errormsg)
+				local compiledChunk, errormsg = loadstring(foldedCode, path)
+
+				if compiledChunk ~= nil then
+					local dumpedChunk = string.dump(compiledChunk)
+					love.filesystem.write(outpath, dumpedChunk)
+				else
+					log(errormsg)
+				end
 			end
 		end
 	elseif _args.png and path:find("%.png$") then
@@ -118,13 +131,17 @@ if not _args.nocombine then
 	local totalCode = (_args.module and combineModule or combineCode)(codeList, mainFile)
 	love.filesystem.write("merged-code.lua", totalCode)
 
-	local compiledChunk, errormsg = loadstring(totalCode, _args.module and (_args.module_name or "module") or "game")
-
-	if compiledChunk ~= nil then
-		local dumpedChunk = string.dump(compiledChunk)
-		love.filesystem.write("out/" .. (_args.module and (_args.module_name or "module") .. ".lua" or mainFile), dumpedChunk)
+	if _args.nocompile then
+		love.filesystem.write("out/" .. (_args.module and (_args.module_name or "module") .. ".lua" or mainFile), totalCode)
 	else
-		log(errormsg)
+		local compiledChunk, errormsg = loadstring(totalCode, _args.module and (_args.module_name or "module") or "game")
+
+		if compiledChunk ~= nil then
+			local dumpedChunk = string.dump(compiledChunk)
+			love.filesystem.write("out/" .. (_args.module and (_args.module_name or "module") .. ".lua" or mainFile), dumpedChunk)
+		else
+			log(errormsg)
+		end
 	end
 end
 

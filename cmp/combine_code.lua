@@ -38,7 +38,7 @@ do
 
 				-- Load module if there is any
 				if file ~= nil then
-					return file()
+					return file
 				end
 			end
 
@@ -63,7 +63,7 @@ do
 		local file = virtual[filePath]
 
 		if file ~= nil then
-			return file()
+			return file
 		end
 
 		return filesystem_load(filePath)
@@ -87,17 +87,25 @@ end
 
 BASE.RETURN = [[
 -- Resume execution of main file
-return virtual[%q]()()
+return virtual[%q]()
 ]]
 
 BASE.FOREACH = [[
-[%q] = function() return function(...)
+[%q] = function(...)
 ----------------------------------------------------------------------------------------------------
 --=== % -88s ===--
 ----------------------------------------------------------------------------------------------------
 %s
 ----------------------------------------------------------------------------------------------------
-end end,
+end,
+]]
+
+BASE.ADDARGTOP = [[
+-- Embed Additional arguments
+]]
+
+BASE.ADDARGFOREACH = [[
+arg[#arg + 1] = %q
 ]]
 
 -- The actual function doing the work
@@ -112,6 +120,16 @@ return function(codeList, mainFile)
 	end
 
 	totalCode[#totalCode + 1] = BASE.BOTTOM
+
+	if _args.addargs then
+		if type(_args.addargs) ~= "table" then _args.addargs = { _args.addargs } end
+
+		totalCode[#totalCode + 1] = BASE.ADDARGTOP
+
+		for i=1, #_args.addargs do
+			totalCode[#totalCode + 1] = BASE.ADDARGFOREACH:format(tostring(_args.addargs[i]))
+		end
+	end
 
 	totalCode[#totalCode + 1] = BASE.RETURN:format(mainFile)
 

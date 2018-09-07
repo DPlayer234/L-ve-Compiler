@@ -14,9 +14,9 @@ if type(arg) == "table" then
 	end
 
 	local function loop(v)
-		if v:find("^%-+") then
+		if v:find("^%-%-") then
 			if last and not had then args[last] = true end
-			last = v:gsub("^%-+", "")
+			last = v:gsub("^%-%-", "")
 			had = false
 		elseif last then
 			if had then
@@ -34,7 +34,7 @@ if type(arg) == "table" then
 	for i=1, #arg do
 		loop(arg[i])
 	end
-	loop("-")
+	loop("--")
 
 	return args
 else
