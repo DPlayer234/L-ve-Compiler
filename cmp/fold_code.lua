@@ -50,7 +50,7 @@ return function(inpath)
 					local s, r = pcall(function()
 						local v = load("return " .. value)()
 						if type(v) == "string" then
-							value = ("(%q)"):format(v)
+							value = ("(%q)"):format(v):gsub("\\\n", "\\n")
 						else
 							value = "(" .. tostring(v) .. ")"
 						end
