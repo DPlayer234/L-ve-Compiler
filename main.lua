@@ -146,4 +146,6 @@ if not _args.nocombine then
 end
 
 love.filesystem.write("log.txt", table.concat(log, "\n"))
-love.system.openURL("file:///" .. love.filesystem.getSaveDirectory())
+if not _args.noopen then
+	love.system.openURL("file:///" .. love.filesystem.getSaveDirectory())
+end
